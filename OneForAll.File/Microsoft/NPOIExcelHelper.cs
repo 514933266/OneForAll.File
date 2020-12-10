@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
+using OneForAll.Core;
 using OneForAll.Core.Extension;
 using OneForAll.Core.Utility;
 
@@ -157,7 +161,7 @@ namespace OneForAll.File
         /// <param name="filePath">文件保存路径</param>
         /// <param name="noWriteColumns">不被写入Excel的列下标</param>
         /// <param name="isWriteColumnHeader">是否将列标题写入</param>
-        public static void Export(List<DataTable> dts, FileType type, string filePath, int[] noWriteColumns = null, bool isWriteColumnHeader = false)
+        public static void Export(IEnumerable<DataTable> dts, FileType type, string filePath, int[] noWriteColumns = null, bool isWriteColumnHeader = false)
         {
             var workbook = Export(dts, type, noWriteColumns, isWriteColumnHeader);
             using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
@@ -174,7 +178,7 @@ namespace OneForAll.File
         /// <param name="noWriteColumns">不被写入Excel的列下标</param>
         /// <param name="isWriteColumnHeader">是否将列标题写入</param>
         /// 
-        public static IWorkbook Export(List<DataTable> dts, FileType type, int[] noWriteColumns = null, bool isWriteColumnHeader = false)
+        public static IWorkbook Export(IEnumerable<DataTable> dts, FileType type, int[] noWriteColumns = null, bool isWriteColumnHeader = false)
         {
             var index = 0;
             ISheet sheet = null;
@@ -192,7 +196,7 @@ namespace OneForAll.File
                         row.CreateCell(i, CellType.String).SetCellValue(t.Columns[i].ColumnName);
                         row.Cells[i].SetColumnWidth();
                     }
-                    
+
                 }
                 for (int i = 0; i < t.Rows.Count; i++)
                 {
@@ -208,7 +212,106 @@ namespace OneForAll.File
             return workbook;
         }
 
-        #endregion 
+        /// <summary>
+        /// 导出Excel
+        /// </summary>
+        /// <param name="dts">数据表集合</param>
+        /// <param name="type">文件类型</param>
+        /// 
+        public static IWorkbook Export<T>(IEnumerable<T> dts, FileType type) where T : class, new()
+        {
+            return Export(dts, type, null, true);
+        }
+
+        /// <summary>
+        /// 导出Excel并保存到本地
+        /// </summary>
+        /// <param name="dts">数据表集合</param>
+        /// <param name="type">文件类型</param>
+        /// <param name="filePath">文件保存路径</param>
+        public static void Export<T>(IEnumerable<T> dts, FileType type, string filePath) where T : class, new()
+        {
+            Export(dts, type, filePath, null, true);
+        }
+
+        /// <summary>
+        /// 导出Excel并保存到本地
+        /// </summary>
+        /// <param name="dts">数据表集合</param>
+        /// <param name="type">文件类型</param>
+        /// <param name="filePath">文件保存路径</param>
+        /// <param name="noWriteColumns">不被写入Excel的列下标</param>
+        /// <param name="isWriteColumnHeader">是否将列标题写入</param>
+        public static void Export<T>(IEnumerable<T> dts, FileType type, string filePath, int[] noWriteColumns = null, bool isWriteColumnHeader = false) where T : class, new()
+        {
+            var workbook = Export(dts, type, noWriteColumns, isWriteColumnHeader);
+            using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+            {
+                workbook.Write(fs);
+            }
+        }
+
+        /// <summary>
+        /// 导出Excel
+        /// </summary>
+        /// <param name="dts">数据表集合</param>
+        /// <param name="type">文件类型</param>
+        /// <param name="noWriteColumns">不被写入Excel的列下标</param>
+        /// <param name="isWriteColumnHeader">是否将列标题写入</param>
+        /// 
+        public static IWorkbook Export<T>(IEnumerable<T> dts, FileType type, int[] noWriteColumns = null, bool isWriteColumnHeader = false) where T : class, new()
+        {
+            ISheet sheet = null;
+            IWorkbook workbook = GetWorkbook(type);
+
+            // 表名
+            var sheetName = "Sheet1";
+            var obj = dts.FirstOrDefault();
+            var objAttr = typeof(T).GetCustomAttributes(typeof(DisplayAttribute), true).FirstOrDefault();
+            if (objAttr != null)
+            {
+                sheetName = ((DisplayAttribute)objAttr).Name;
+            }
+            sheet = workbook.CreateSheet(sheetName);
+
+            // 表头
+            var props = typeof(T).GetProperties();
+            if (isWriteColumnHeader)
+            {
+                var row = sheet.CreateRow(0);
+                for (int i = 0; i < props.Length; i++)
+                {
+                    var attr = props[i].GetCustomAttributes(typeof(DisplayAttribute), true).FirstOrDefault();
+                    if (attr != null)
+                    {
+                        var name = ((DisplayAttribute)attr).Name;
+                        row.CreateCell(i, CellType.String).SetCellValue(name);
+                        row.Cells[i].SetColumnWidth();
+                    }
+                    else
+                    {
+                        row.CreateCell(i, CellType.String).SetCellValue("列{0}".Fmt(i + 1));
+                        row.Cells[i].SetColumnWidth();
+                    }
+                }
+            }
+
+            // 列表
+            var index = 0;
+            dts.ForEach(t =>
+            {
+                var row = sheet.CreateRow(isWriteColumnHeader ? index + 1 : index);
+                for (int j = 0; j < props.Length; j++)
+                {
+                    if (noWriteColumns != null && j.In(noWriteColumns)) continue;
+                    row.CreateCell(j, props[j], t);
+                    row.Cells[j].SetColumnWidth();
+                }
+                index++;
+            });
+            return workbook;
+        }
+        #endregion
 
         #region 获取工作簿
 
@@ -223,7 +326,7 @@ namespace OneForAll.File
             IWorkbook workbook = null;
             string sheetName = string.Empty;
             if (type == FileType.xlsx)
-            { 
+            {
                 // 2007版本
                 workbook = new XSSFWorkbook(stream);
             }
@@ -279,6 +382,94 @@ namespace OneForAll.File
                 case CellType.String: return cell.StringCellValue.ToString();
                 case CellType.Unknown:
                 default: return "";
+            }
+        }
+
+        /// <summary>
+        /// 根据属性类型创建对应单元格
+        /// </summary>
+        /// <param name="cell">单元格</param>
+        /// <returns>字符串值</returns>
+        public static void CreateCell(this IRow row, int columnIndex, PropertyInfo property, object instance)
+        {
+            var val = property.GetValue(instance);
+            var cell = row.CreateCell(columnIndex);
+            if (property.PropertyType.Equals(typeof(string)))
+            {
+                cell.SetCellType(CellType.String);
+                cell.SetCellValue(val == null ? "" : val.ToString());
+            }
+            else if (property.PropertyType.Equals(typeof(int)) ||
+                property.PropertyType.Equals(typeof(double)) ||
+                property.PropertyType.Equals(typeof(decimal)) ||
+                property.PropertyType.Equals(typeof(float)))
+            {
+                cell.SetCellType(CellType.Numeric);
+                cell.SetCellValue(Convert.ToDouble(val));
+                var attr = property.GetCustomAttributes(typeof(DisplayFormatAttribute), true).FirstOrDefault();
+                if (attr != null)
+                {
+                    var format = ((DisplayFormatAttribute)attr).DataFormatString ?? "";
+                    if (!format.IsNullOrEmpty())
+                    {
+                        IDataFormat dataFormat = cell.Sheet.Workbook.CreateDataFormat();
+                        ICellStyle style = cell.Sheet.Workbook.CreateCellStyle();
+                        style.DataFormat = dataFormat.GetFormat(format);
+                        cell.CellStyle = style;
+                    }
+                }
+            }
+            else if (property.PropertyType.Equals(typeof(DateTime)) || property.PropertyType.Equals(typeof(DateTime?)))
+            {
+                cell.SetCellType(CellType.Numeric);
+                var format = "yyyy-MM-dd hh:mm:ss ";
+                var attr = property.GetCustomAttributes(typeof(DisplayFormatAttribute), true).FirstOrDefault();
+                if (attr != null)
+                {
+                    format = ((DisplayFormatAttribute)attr).DataFormatString ?? format;
+                }
+                IDataFormat dataFormat = cell.Sheet.Workbook.CreateDataFormat();
+                ICellStyle style = cell.Sheet.Workbook.CreateCellStyle();
+                style.DataFormat = dataFormat.GetFormat(format);
+                cell.SetCellValue(val.TryDateTime());
+                cell.CellStyle = style;
+            }
+            else if (property.PropertyType.Equals(typeof(bool)))
+            {
+                cell.SetCellType(CellType.Boolean);
+            }
+            else if (property.PropertyType.Equals(typeof(string)) && instance != null)
+            {
+                var value = property.GetValue(instance);
+                if (value != null &&
+                    value.ToString().ToLower().StartsWith("http") ||
+                    value.ToString().ToLower().StartsWith("https"))
+                {
+                    cell.SetCellType(CellType.Blank);
+                    IHyperlink link;
+                    if (cell.Sheet.Workbook.GetType() == typeof(XSSFWorkbook))
+                    {
+                        link = new XSSFHyperlink(HyperlinkType.Url);
+                        link.Address = val.ToString();
+                    }
+                    else
+                    {
+                        link = new HSSFHyperlink(HyperlinkType.Url);
+                        link.Address = val.ToString();
+                    }
+                    cell.SetCellValue(val.ToString());
+                    cell.Hyperlink = link;
+                }
+                else
+                {
+                    cell.SetCellType(CellType.String);
+                    cell.SetCellValue(val == null ? "" : val.ToString());
+                }
+            }
+            else
+            {
+                cell.SetCellType(CellType.String);
+                cell.SetCellValue(val == null ? "" : val.ToString());
             }
         }
 

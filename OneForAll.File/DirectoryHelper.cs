@@ -177,7 +177,7 @@ namespace OneForAll.File
                 Copy(Path.Combine(directorySource, dir.Name), Path.Combine(directoryTarget, dir.Name));
                 if (option == SearchOption.AllDirectories)
                 {
-                    MoveDirectoryFiles(Path.Combine(directorySource, dir.Name), Path.Combine(directoryTarget, dir.Name), SearchOption.AllDirectories, dateType, timeSpan);
+                    MoveFiles(Path.Combine(directorySource, dir.Name), Path.Combine(directoryTarget, dir.Name), SearchOption.AllDirectories, dateType, timeSpan);
                 }
             }
             //删除目录

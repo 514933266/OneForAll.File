@@ -91,9 +91,8 @@ namespace OneForAll.File
                     fs.Write(bytes, 0, bytes.Length);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                throw ex;
             }
             finally
             {
