@@ -191,21 +191,24 @@ namespace OneForAll.File
                 if (isWriteColumnHeader)
                 {
                     var row = sheet.CreateRow(0);
+                    var columnIndex = 0;
                     for (int i = 0; i < t.Columns.Count; i++)
                     {
-                        row.CreateCell(i, CellType.String).SetCellValue(t.Columns[i].ColumnName);
-                        row.Cells[i].SetColumnWidth();
+                        if (noWriteColumns != null && noWriteColumns.Contains(i)) continue;
+                        row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Columns[columnIndex].ColumnName);
+                        row.Cells[columnIndex].SetColumnWidth();
+                        columnIndex++;
                     }
-
                 }
                 for (int i = 0; i < t.Rows.Count; i++)
                 {
                     var row = sheet.CreateRow(isWriteColumnHeader ? i + 1 : i);
+                    var columnIndex = 0;
                     for (int j = 0; j < t.Columns.Count; j++)
                     {
-                        if (noWriteColumns != null && j.In(noWriteColumns)) continue;
-                        row.CreateCell(j, CellType.String).SetCellValue(t.Rows[i][j].ToString());
-                        row.Cells[j].SetColumnWidth();
+                        if (noWriteColumns != null && noWriteColumns.Contains(j)) continue;
+                        row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Rows[i][columnIndex].ToString());
+                        row.Cells[columnIndex].SetColumnWidth();
                     }
                 }
             });
@@ -279,20 +282,23 @@ namespace OneForAll.File
             if (isWriteColumnHeader)
             {
                 var row = sheet.CreateRow(0);
+                var columnIndex = 0;
                 for (int i = 0; i < props.Length; i++)
                 {
+                    if (noWriteColumns != null && noWriteColumns.Contains(i)) continue;
                     var attr = props[i].GetCustomAttributes(typeof(DisplayAttribute), true).FirstOrDefault();
                     if (attr != null)
                     {
                         var name = ((DisplayAttribute)attr).Name;
-                        row.CreateCell(i, CellType.String).SetCellValue(name);
-                        row.Cells[i].SetColumnWidth();
+                        row.CreateCell(columnIndex, CellType.String).SetCellValue(name);
+                        row.Cells[columnIndex].SetColumnWidth();
                     }
                     else
                     {
-                        row.CreateCell(i, CellType.String).SetCellValue("列{0}".Fmt(i + 1));
-                        row.Cells[i].SetColumnWidth();
+                        row.CreateCell(columnIndex, CellType.String).SetCellValue("列{0}".Fmt(columnIndex + 1));
+                        row.Cells[columnIndex].SetColumnWidth();
                     }
+                    columnIndex++;
                 }
             }
 
@@ -301,11 +307,13 @@ namespace OneForAll.File
             dts.ForEach(t =>
             {
                 var row = sheet.CreateRow(isWriteColumnHeader ? index + 1 : index);
+                var columnIndex = 0;
                 for (int j = 0; j < props.Length; j++)
                 {
-                    if (noWriteColumns != null && j.In(noWriteColumns)) continue;
-                    row.CreateCell(j, props[j], t);
-                    row.Cells[j].SetColumnWidth();
+                    if (noWriteColumns != null && noWriteColumns.Contains(j)) continue;
+                    row.CreateCell(columnIndex, props[j], t);
+                    row.Cells[columnIndex].SetColumnWidth();
+                    columnIndex++;
                 }
                 index++;
             });
