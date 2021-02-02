@@ -134,7 +134,6 @@ namespace OneForAll.File
         /// </summary>
         /// <typeparam name="T">读取的Excel流</typeparam>
         /// <param name="stream">Excel的类型</param>
-        /// <param name="errors">errors错误消息</param>
         /// <param name="type">第一行是否标题列</param>
         /// <param name="isFirstTitle">表格集合</param>
         /// <returns></returns>
@@ -151,7 +150,7 @@ namespace OneForAll.File
 
         #endregion
 
-        #region 导出
+        #region DataTable导出
 
         /// <summary>
         /// 导出Excel并保存到本地
@@ -159,11 +158,18 @@ namespace OneForAll.File
         /// <param name="dts">数据表集合</param>
         /// <param name="type">文件类型</param>
         /// <param name="filePath">文件保存路径</param>
-        /// <param name="noWriteColumns">不被写入Excel的列下标</param>
+        /// <param name="columns">列下标</param>
         /// <param name="isWriteColumnHeader">是否将列标题写入</param>
-        public static void Export(IEnumerable<DataTable> dts, FileType type, string filePath, int[] noWriteColumns = null, bool isWriteColumnHeader = false)
+        /// <param name="isNoWriteMode">是否不写出模式</param>
+        public static void Export(
+            IEnumerable<DataTable> dts,
+            FileType type,
+            string filePath,
+            int[] columns = null,
+            bool isWriteColumnHeader = true,
+            bool isNoWriteMode = true)
         {
-            var workbook = Export(dts, type, noWriteColumns, isWriteColumnHeader);
+            var workbook = Export(dts, type, columns, isWriteColumnHeader, isNoWriteMode);
             using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
                 workbook.Write(fs);
@@ -173,12 +179,61 @@ namespace OneForAll.File
         /// <summary>
         /// 导出Excel
         /// </summary>
+        /// <param name="dt">数据表</param>
+        /// <param name="type">文件类型</param>
+        /// <param name="columns">列下标</param>
+        /// <param name="isWriteColumnHeader">是否将列标题写入</param>
+        /// <param name="isNoWriteMode">是否不写出模式</param>
+        /// <returns>Excel</returns>
+        public static IWorkbook Export(
+            DataTable dt,
+            FileType type,
+            int[] columns = null,
+            bool isWriteColumnHeader = true,
+            bool isNoWriteMode = true)
+        {
+            var dts = new List<DataTable>() { dt };
+            return Export(dts, type, columns, isWriteColumnHeader, isNoWriteMode);
+        }
+
+        /// <summary>
+        /// 导出Excel
+        /// </summary>
         /// <param name="dts">数据表集合</param>
         /// <param name="type">文件类型</param>
-        /// <param name="noWriteColumns">不被写入Excel的列下标</param>
+        /// <param name="columns">列下标</param>
         /// <param name="isWriteColumnHeader">是否将列标题写入</param>
-        /// 
-        public static IWorkbook Export(IEnumerable<DataTable> dts, FileType type, int[] noWriteColumns = null, bool isWriteColumnHeader = false)
+        /// <param name="isNoWriteMode">是否不写出模式</param>
+        /// <returns>Excel</returns>
+        public static IWorkbook Export(
+            IEnumerable<DataTable> dts,
+            FileType type,
+            int[] columns = null,
+            bool isWriteColumnHeader = true,
+            bool isNoWriteMode = true)
+        {
+            if (columns.IsNull()) return Export(dts, type, isWriteColumnHeader);
+            if (isNoWriteMode)
+            {
+                return IgnorableExport(dts, type, columns, isWriteColumnHeader);
+            }
+            else
+            {
+                return SortableExport(dts, type, columns, isWriteColumnHeader);
+            }
+        }
+
+        /// <summary>
+        /// 导出Excel
+        /// </summary>
+        /// <param name="dts">数据表集合</param>
+        /// <param name="type">文件类型</param>
+        /// <param name="isWriteColumnHeader">是否将列标题写入</param>
+        /// <returns>Excel</returns>
+        public static IWorkbook Export(
+            IEnumerable<DataTable> dts,
+            FileType type,
+            bool isWriteColumnHeader)
         {
             var index = 0;
             ISheet sheet = null;
@@ -194,19 +249,17 @@ namespace OneForAll.File
                     var columnIndex = 0;
                     for (int i = 0; i < t.Columns.Count; i++)
                     {
-                        if (noWriteColumns != null && noWriteColumns.Contains(i)) continue;
                         row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Columns[columnIndex].ColumnName);
                         row.Cells[columnIndex].SetColumnWidth();
                         columnIndex++;
                     }
                 }
-                for (int i = 0; i < t.Rows.Count; i++)
+                for (int i = (isWriteColumnHeader ? 1 : 0); i < t.Rows.Count; i++)
                 {
-                    var row = sheet.CreateRow(isWriteColumnHeader ? i + 1 : i);
+                    var row = sheet.CreateRow(i);
                     var columnIndex = 0;
                     for (int j = 0; j < t.Columns.Count; j++)
                     {
-                        if (noWriteColumns != null && noWriteColumns.Contains(j)) continue;
                         row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Rows[i][columnIndex].ToString());
                         row.Cells[columnIndex].SetColumnWidth();
                     }
@@ -216,15 +269,111 @@ namespace OneForAll.File
         }
 
         /// <summary>
-        /// 导出Excel
+        /// 导出Excel（可排序列）
         /// </summary>
         /// <param name="dts">数据表集合</param>
         /// <param name="type">文件类型</param>
-        /// 
-        public static IWorkbook Export<T>(IEnumerable<T> dts, FileType type) where T : class, new()
+        /// <param name="columns">导出的列下标</param>
+        /// <param name="isWriteColumnHeader">是否显示列标题</param>
+        /// <returns>Excel</returns>
+        public static IWorkbook SortableExport(
+            IEnumerable<DataTable> dts,
+            FileType type,
+            int[] columns,
+            bool isWriteColumnHeader)
         {
-            return Export(dts, type, null, true);
+            var index = 0;
+            ISheet sheet = null;
+            IWorkbook workbook = GetWorkbook(type);
+            dts.ForEach(t =>
+            {
+                index++;
+                var sheetName = t.TableName.IsNullOrEmpty() ? ("Sheet" + index) : t.TableName;
+                sheet = workbook.CreateSheet(sheetName);
+                if (isWriteColumnHeader)
+                {
+                    var columnIndex = 0;
+                    var row = sheet.CreateRow(0);
+                    columns.ForEach(i =>
+                    {
+                        if (!t.Columns[i].IsNull())
+                        {
+                            row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Columns[i].ColumnName);
+                            row.Cells[columnIndex].SetColumnWidth();
+                            columnIndex++;
+                        }
+                    });
+                }
+                for (int i = (isWriteColumnHeader ? 1 : 0); i < t.Rows.Count; i++)
+                {
+                    var row = sheet.CreateRow(i);
+                    var columnIndex = 0;
+                    columns.ForEach(j =>
+                    {
+                        if (!t.Columns[j].IsNull())
+                        {
+                            row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Rows[i][j].ToString());
+                            row.Cells[columnIndex].SetColumnWidth();
+                            columnIndex++;
+                        }
+                    });
+                }
+            });
+            return workbook;
         }
+
+        /// <summary>
+        /// 导出Excel（可忽略列）
+        /// </summary>
+        /// <param name="dts">数据表集合</param>
+        /// <param name="type">文件类型</param>
+        /// <param name="noWriteColumns">不导出列下标</param>
+        /// <param name="isWriteColumnHeader">是否显示列标题</param>
+        /// <returns>Excel</returns>
+        public static IWorkbook IgnorableExport(
+            IEnumerable<DataTable> dts,
+            FileType type,
+            int[] noWriteColumns,
+            bool isWriteColumnHeader)
+        {
+            var index = 0;
+            ISheet sheet = null;
+            IWorkbook workbook = GetWorkbook(type);
+            dts.ForEach(t =>
+            {
+                index++;
+                var sheetName = t.TableName.IsNullOrEmpty() ? ("Sheet" + index) : t.TableName;
+                sheet = workbook.CreateSheet(sheetName);
+                if (isWriteColumnHeader)
+                {
+                    var row = sheet.CreateRow(0);
+                    var columnIndex = 0;
+                    for (int i = 0; i < t.Columns.Count; i++)
+                    {
+                        if (noWriteColumns.Contains(i)) continue;
+                        row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Columns[columnIndex].ColumnName);
+                        row.Cells[columnIndex].SetColumnWidth();
+                        columnIndex++;
+                    }
+                }
+                for (int i = (isWriteColumnHeader ? 1 : 0); i < t.Rows.Count; i++)
+                {
+                    var row = sheet.CreateRow(isWriteColumnHeader ? i + 1 : i);
+                    var columnIndex = 0;
+                    for (int j = 0; j < t.Columns.Count; j++)
+                    {
+                        if (noWriteColumns.Contains(j)) continue;
+                        row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Rows[i][columnIndex].ToString());
+                        row.Cells[columnIndex].SetColumnWidth();
+                    }
+                }
+            });
+            return workbook;
+        }
+
+        #endregion
+
+        #region 实体导出
 
         /// <summary>
         /// 导出Excel并保存到本地
@@ -232,22 +381,18 @@ namespace OneForAll.File
         /// <param name="dts">数据表集合</param>
         /// <param name="type">文件类型</param>
         /// <param name="filePath">文件保存路径</param>
-        public static void Export<T>(IEnumerable<T> dts, FileType type, string filePath) where T : class, new()
-        {
-            Export(dts, type, filePath, null, true);
-        }
-
-        /// <summary>
-        /// 导出Excel并保存到本地
-        /// </summary>
-        /// <param name="dts">数据表集合</param>
-        /// <param name="type">文件类型</param>
-        /// <param name="filePath">文件保存路径</param>
-        /// <param name="noWriteColumns">不被写入Excel的列下标</param>
+        /// <param name="columns">列下标</param>
         /// <param name="isWriteColumnHeader">是否将列标题写入</param>
-        public static void Export<T>(IEnumerable<T> dts, FileType type, string filePath, int[] noWriteColumns = null, bool isWriteColumnHeader = false) where T : class, new()
+        /// <param name="isNoWriteMode">是否不写出模式</param>
+        public static void EntityExport<T>(
+            IEnumerable<T> dts,
+            FileType type,
+            string filePath,
+            int[] columns = null,
+            bool isWriteColumnHeader = true,
+            bool isNoWriteMode = true) where T : class, new()
         {
-            var workbook = Export(dts, type, noWriteColumns, isWriteColumnHeader);
+            var workbook = EntityExport(dts, type, columns, isWriteColumnHeader, isNoWriteMode);
             using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
                 workbook.Write(fs);
@@ -259,10 +404,39 @@ namespace OneForAll.File
         /// </summary>
         /// <param name="dts">数据表集合</param>
         /// <param name="type">文件类型</param>
-        /// <param name="noWriteColumns">不被写入Excel的列下标</param>
+        /// <param name="columns">列下标</param>
         /// <param name="isWriteColumnHeader">是否将列标题写入</param>
-        /// 
-        public static IWorkbook Export<T>(IEnumerable<T> dts, FileType type, int[] noWriteColumns = null, bool isWriteColumnHeader = false) where T : class, new()
+        /// <param name="isNoWriteMode">是否不写出模式</param>
+        /// <returns>Excel</returns>
+        public static IWorkbook EntityExport<T>(
+            IEnumerable<T> dts,
+            FileType type,
+            int[] columns = null,
+            bool isWriteColumnHeader = true,
+            bool isNoWriteMode = true) where T : class, new()
+        {
+            if (columns.IsNull()) return EntityExport(dts, type, isWriteColumnHeader);
+            if (isNoWriteMode)
+            {
+                return IgnorableEntityExport(dts, type, columns, isWriteColumnHeader);
+            }
+            else
+            {
+                return SortableEntityExport(dts, type, columns, isWriteColumnHeader);
+            }
+        }
+
+        /// <summary>
+        /// 导出Excel
+        /// </summary>
+        /// <param name="dts">数据表集合</param>
+        /// <param name="type">文件类型</param>
+        /// <param name="isWriteColumnHeader">是否将列标题写入</param>
+        /// <returns>Excel</returns>
+        public static IWorkbook EntityExport<T>(
+            IEnumerable<T> dts,
+            FileType type,
+            bool isWriteColumnHeader) where T : class, new()
         {
             ISheet sheet = null;
             IWorkbook workbook = GetWorkbook(type);
@@ -283,10 +457,9 @@ namespace OneForAll.File
             {
                 var row = sheet.CreateRow(0);
                 var columnIndex = 0;
-                for (int i = 0; i < props.Length; i++)
+                for (int j = 0; j < props.Length; j++)
                 {
-                    if (noWriteColumns != null && noWriteColumns.Contains(i)) continue;
-                    var attr = props[i].GetCustomAttributes(typeof(DisplayAttribute), true).FirstOrDefault();
+                    var attr = props[j].GetCustomAttributes(typeof(DisplayAttribute), true).FirstOrDefault();
                     if (attr != null)
                     {
                         var name = ((DisplayAttribute)attr).Name;
@@ -303,19 +476,162 @@ namespace OneForAll.File
             }
 
             // 列表
-            var index = 0;
+            var i = isWriteColumnHeader ? 1 : 0;
             dts.ForEach(t =>
             {
-                var row = sheet.CreateRow(isWriteColumnHeader ? index + 1 : index);
+                var row = sheet.CreateRow(i);
                 var columnIndex = 0;
                 for (int j = 0; j < props.Length; j++)
                 {
-                    if (noWriteColumns != null && noWriteColumns.Contains(j)) continue;
                     row.CreateCell(columnIndex, props[j], t);
                     row.Cells[columnIndex].SetColumnWidth();
                     columnIndex++;
                 }
-                index++;
+                i++;
+            });
+            return workbook;
+        }
+
+        /// <summary>
+        /// 导出Excel（可排序列）
+        /// </summary>
+        /// <param name="dts">数据表集合</param>
+        /// <param name="type">文件类型</param>
+        /// <param name="columns">导出的列下标</param>
+        /// <param name="isWriteColumnHeader">是否显示列标题</param>
+        /// <returns>Excel</returns>
+        public static IWorkbook SortableEntityExport<T>(
+            IEnumerable<T> dts,
+            FileType type,
+            int[] columns,
+            bool isWriteColumnHeader) where T : class, new()
+        {
+            ISheet sheet = null;
+            IWorkbook workbook = GetWorkbook(type);
+
+            // 表名
+            var sheetName = "Sheet1";
+            var obj = dts.FirstOrDefault();
+            var objAttr = typeof(T).GetCustomAttributes(typeof(DisplayAttribute), true).FirstOrDefault();
+            if (objAttr != null)
+            {
+                sheetName = ((DisplayAttribute)objAttr).Name;
+            }
+            sheet = workbook.CreateSheet(sheetName);
+
+            // 表头
+            var props = typeof(T).GetProperties();
+            if (isWriteColumnHeader)
+            {
+                var row = sheet.CreateRow(0);
+                var columnIndex = 0;
+                columns.ForEach(j =>
+                {
+                    if (!props[j].IsNull())
+                    {
+                        var attr = props[j].GetCustomAttributes(typeof(DisplayAttribute), true).FirstOrDefault();
+                        if (attr != null)
+                        {
+                            var name = ((DisplayAttribute)attr).Name;
+                            row.CreateCell(columnIndex, CellType.String).SetCellValue(name);
+                            row.Cells[columnIndex].SetColumnWidth();
+                        }
+                        else
+                        {
+                            row.CreateCell(columnIndex, CellType.String).SetCellValue("列{0}".Fmt(columnIndex + 1));
+                            row.Cells[columnIndex].SetColumnWidth();
+                        }
+                        columnIndex++;
+                    }
+                });
+            }
+
+            // 列表
+            var i = isWriteColumnHeader ? 1 : 0;
+            dts.ForEach(t =>
+            {
+                var row = sheet.CreateRow(i);
+                var columnIndex = 0;
+                columns.ForEach(j =>
+                {
+                    if (!props[j].IsNull())
+                    {
+                        row.CreateCell(columnIndex, props[j], t);
+                        row.Cells[columnIndex].SetColumnWidth();
+                        columnIndex++;
+                    }
+                });
+                i++;
+            });
+            return workbook;
+        }
+
+        /// <summary>
+        /// 导出Excel（可忽略列）
+        /// </summary>
+        /// <param name="dts">数据表集合</param>
+        /// <param name="type">文件类型</param>
+        /// <param name="noWriteColumns">不导出列下标</param>
+        /// <param name="isWriteColumnHeader">是否显示列标题</param>
+        /// <returns>Excel</returns>
+        public static IWorkbook IgnorableEntityExport<T>(
+            IEnumerable<T> dts,
+            FileType type,
+            int[] noWriteColumns,
+            bool isWriteColumnHeader) where T : class, new()
+        {
+            ISheet sheet = null;
+            IWorkbook workbook = GetWorkbook(type);
+
+            // 表名
+            var sheetName = "Sheet1";
+            var obj = dts.FirstOrDefault();
+            var objAttr = typeof(T).GetCustomAttributes(typeof(DisplayAttribute), true).FirstOrDefault();
+            if (objAttr != null)
+            {
+                sheetName = ((DisplayAttribute)objAttr).Name;
+            }
+            sheet = workbook.CreateSheet(sheetName);
+
+            // 表头
+            var props = typeof(T).GetProperties();
+            if (isWriteColumnHeader)
+            {
+                var row = sheet.CreateRow(0);
+                var columnIndex = 0;
+                for (int j = 0; j < props.Length; j++)
+                {
+                    if (noWriteColumns.Contains(j)) continue;
+                    var attr = props[j].GetCustomAttributes(typeof(DisplayAttribute), true).FirstOrDefault();
+                    if (attr != null)
+                    {
+                        var name = ((DisplayAttribute)attr).Name;
+                        row.CreateCell(columnIndex, CellType.String).SetCellValue(name);
+                        row.Cells[columnIndex].SetColumnWidth();
+                    }
+                    else
+                    {
+                        row.CreateCell(columnIndex, CellType.String).SetCellValue("列{0}".Fmt(columnIndex + 1));
+                        row.Cells[columnIndex].SetColumnWidth();
+                    }
+                    columnIndex++;
+                }
+            }
+
+            // 列表
+            var i = isWriteColumnHeader ? 1 : 0;
+            dts.ForEach(t =>
+            {
+                var row = sheet.CreateRow(i);
+                var columnIndex = 0;
+                for (int j = 0; j < props.Length; j++)
+                {
+                    if (noWriteColumns.Contains(j)) continue;
+                    row.CreateCell(columnIndex, props[j], t);
+                    row.Cells[columnIndex].SetColumnWidth();
+                    columnIndex++;
+                }
+                i++;
             });
             return workbook;
         }
