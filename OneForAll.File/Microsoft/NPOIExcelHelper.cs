@@ -235,12 +235,11 @@ namespace OneForAll.File
             FileType type,
             bool isWriteColumnHeader)
         {
-            var index = 0;
             ISheet sheet = null;
             IWorkbook workbook = GetWorkbook(type);
             dts.ForEach(t =>
             {
-                index++;
+                var index = isWriteColumnHeader ? 1 : 0;
                 var sheetName = t.TableName.IsNullOrEmpty() ? ("Sheet" + index) : t.TableName;
                 sheet = workbook.CreateSheet(sheetName);
                 if (isWriteColumnHeader)
@@ -254,15 +253,17 @@ namespace OneForAll.File
                         columnIndex++;
                     }
                 }
-                for (int i = (isWriteColumnHeader ? 1 : 0); i < t.Rows.Count; i++)
+                for (int i = 0; i < t.Rows.Count; i++)
                 {
-                    var row = sheet.CreateRow(i);
+                    var row = sheet.CreateRow(index);
                     var columnIndex = 0;
                     for (int j = 0; j < t.Columns.Count; j++)
                     {
                         row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Rows[i][columnIndex].ToString());
                         row.Cells[columnIndex].SetColumnWidth();
+                        columnIndex++;
                     }
+                    index++;
                 }
             });
             return workbook;
@@ -282,12 +283,11 @@ namespace OneForAll.File
             int[] columns,
             bool isWriteColumnHeader)
         {
-            var index = 0;
             ISheet sheet = null;
             IWorkbook workbook = GetWorkbook(type);
             dts.ForEach(t =>
             {
-                index++;
+                var index = isWriteColumnHeader ? 1 : 0;
                 var sheetName = t.TableName.IsNullOrEmpty() ? ("Sheet" + index) : t.TableName;
                 sheet = workbook.CreateSheet(sheetName);
                 if (isWriteColumnHeader)
@@ -304,9 +304,9 @@ namespace OneForAll.File
                         }
                     });
                 }
-                for (int i = (isWriteColumnHeader ? 1 : 0); i < t.Rows.Count; i++)
+                for (int i = 0; i < t.Rows.Count; i++)
                 {
-                    var row = sheet.CreateRow(i);
+                    var row = sheet.CreateRow(index);
                     var columnIndex = 0;
                     columns.ForEach(j =>
                     {
@@ -317,6 +317,7 @@ namespace OneForAll.File
                             columnIndex++;
                         }
                     });
+                    index++;
                 }
             });
             return workbook;
@@ -336,12 +337,11 @@ namespace OneForAll.File
             int[] noWriteColumns,
             bool isWriteColumnHeader)
         {
-            var index = 0;
             ISheet sheet = null;
             IWorkbook workbook = GetWorkbook(type);
             dts.ForEach(t =>
             {
-                index++;
+                var index = isWriteColumnHeader ? 1 : 0;
                 var sheetName = t.TableName.IsNullOrEmpty() ? ("Sheet" + index) : t.TableName;
                 sheet = workbook.CreateSheet(sheetName);
                 if (isWriteColumnHeader)
@@ -356,9 +356,9 @@ namespace OneForAll.File
                         columnIndex++;
                     }
                 }
-                for (int i = (isWriteColumnHeader ? 1 : 0); i < t.Rows.Count; i++)
+                for (int i = 0; i < t.Rows.Count; i++)
                 {
-                    var row = sheet.CreateRow(isWriteColumnHeader ? i + 1 : i);
+                    var row = sheet.CreateRow(index);
                     var columnIndex = 0;
                     for (int j = 0; j < t.Columns.Count; j++)
                     {
@@ -366,6 +366,7 @@ namespace OneForAll.File
                         row.CreateCell(columnIndex, CellType.String).SetCellValue(t.Rows[i][columnIndex].ToString());
                         row.Cells[columnIndex].SetColumnWidth();
                     }
+                    index++;
                 }
             });
             return workbook;
