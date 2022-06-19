@@ -234,6 +234,28 @@ namespace OneForAll.File
         }
 
         /// <summary>
+        /// 验证文件Hex
+        /// </summary>
+        /// <param name="file">文件流</param>
+        /// <param name="fileType">文件类型</param>
+        /// <returns>结果</returns>
+        public static bool ValidateFileType(Stream file, FileType fileType, int hexIndex = 4)
+        {
+            var hex = "";
+            var pass = false;
+            var header = new byte[hexIndex];
+            file.Read(header, 0, hexIndex);
+            header.ForEach(e => hex += e);
+            file.Seek(0, SeekOrigin.Begin);
+            var value = (int)fileType;
+            if (hex.StartsWith(value.ToString()))
+            {
+                pass = true;
+            }
+            return pass;
+        }
+
+        /// <summary>
         /// 验证文件名
         /// </summary>
         /// <param name="fileName">文件名</param>
@@ -247,6 +269,27 @@ namespace OneForAll.File
             {
                 var enumType = ".".Append(types[i]);
                 if (extension == enumType)
+                {
+                    pass = true;
+                    break;
+                }
+            }
+            return pass;
+        }
+
+        /// <summary>
+        /// 验证文件名
+        /// </summary>
+        /// <param name="fileName">文件名</param>
+        /// <param name="extensions">扩展名</param>
+        /// <returns>结果</returns>
+        public static bool ValidateFileName(string fileName, params string[] extensions)
+        {
+            var pass = false;
+            var extension = Path.GetExtension(fileName);
+            for (var i = 0; i < extensions.Length; i++)
+            {
+                if (extension == extensions[i])
                 {
                     pass = true;
                     break;

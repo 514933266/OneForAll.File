@@ -51,5 +51,19 @@ namespace OneForAll.File
         {
             return FileHelper.ValidateFileName<DocType>(fileName);
         }
+
+        /// <summary>
+        /// 验证文件是否Excel格式
+        /// </summary>
+        /// <param name="fileName">文件名</param>
+        /// <returns>结果</returns>
+        public bool ValidateIsExcel(string fileName, Stream file)
+        {
+            if (FileHelper.ValidateFileName<ExcelType>(fileName))
+            {
+                return FileHelper.ValidateFileType<ExcelType>(file);
+            }
+            return false;
+        }
     }
 }

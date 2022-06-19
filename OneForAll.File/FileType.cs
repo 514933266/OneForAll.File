@@ -16,7 +16,7 @@ namespace OneForAll.File
         ppt,
         docx,
         zip = 807534,
-        xlsx,
+        xlsx = 807535,
         pptx,
         pdf = 378068,
         txt,
@@ -62,6 +62,15 @@ namespace OneForAll.File
         ppt = FileType.ppt,
         pptx = FileType.pptx,
         pdf = FileType.pdf
+    }
+
+    /// <summary>
+    /// Excel文档类型
+    /// </summary>
+    public enum ExcelType
+    {
+        xlsx = FileType.xlsx,
+        xls = FileType.xls
     }
 
     /// <summary>
