@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>7.1</LangVersion>
     <Authors>xhp</Authors>
     <Company>xhp</Company>
@@ -9,9 +9,9 @@
     <PackageProjectUrl>https://github.com/514933266/OneForAll.File.git</PackageProjectUrl>
     <Copyright>xhp</Copyright>
     <PackageLicenseExpression></PackageLicenseExpression>
-    <FileVersion>1.1.5.0</FileVersion>
-    <AssemblyVersion>1.1.5.0</AssemblyVersion>
-    <Version>1.1.5</Version>
+    <FileVersion>1.1.6.0</FileVersion>
+    <AssemblyVersion>1.1.6.0</AssemblyVersion>
+    <Version>1.1.6</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <RepositoryUrl>https://github.com/514933266/OneForAll.File.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
