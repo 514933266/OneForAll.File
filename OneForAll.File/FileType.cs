@@ -16,7 +16,7 @@ namespace OneForAll.File
         ppt,
         docx,
         zip = 807534,
-        xlsx = 807535,
+        xlsx = 807534,
         pptx,
         pdf = 378068,
         txt,
