@@ -13,29 +13,25 @@ namespace OneForAll.File
     /// </summary>
     public static class FileHelper
     {
-        #region 写
-
         /// <summary>
         /// 在指定路径创建一个文件(覆盖旧文件)
         /// </summary>
         /// <param name="filePath">文件路径</param>
-        public static void Create(string filePath)
-        {
-            Write(filePath, new byte[0]);
-        }
-        /// <summary>
-        /// 在指定路径创建一个文件(覆盖旧文件)
-        /// </summary>
-        /// <param name="filePath">文件路径</param>
-        /// <param name="stream">文件流</param>
         public static void Write(string filePath, Stream stream)
         {
-            using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+            if (stream == null)
             {
-                stream.CopyTo(fs);
+                Write(filePath, new byte[0]);
             }
-            stream.Close();
+            else
+            {
+                using (FileStream fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    stream.CopyTo(fs);
+                }
+            }
         }
+
         /// <summary>
         /// 在指定路径创建一个文件(覆盖旧文件)
         /// </summary>
@@ -49,16 +45,12 @@ namespace OneForAll.File
             }
         }
 
-        #endregion
-
-        #region 读
-
         /// <summary>
         /// 读取文件
         /// </summary>
         /// <param name="filename">文件路径</param>
         /// <returns>文件流</returns>
-        public static Stream ReadStream(string filename)
+        public static Stream Read(string filename)
         {
             return new FileStream(filename, FileMode.Open, FileAccess.Read);
         }
@@ -70,7 +62,7 @@ namespace OneForAll.File
         /// <returns>文件字节流</returns>
         public static byte[] ReadByte(string filename)
         {
-            return ReadByte(filename, 0);
+            return ReadByte(filename, -1);
         }
 
         /// <summary>
@@ -84,7 +76,7 @@ namespace OneForAll.File
             byte[] arr = null;
             using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
-                var cur = length > 0 ? length : fs.Length;
+                var cur = length > -1 ? length : fs.Length;
                 arr = new byte[cur];
                 fs.Read(arr, 0, (int)cur);
             }
@@ -92,39 +84,13 @@ namespace OneForAll.File
         }
 
         /// <summary>
-        /// 获取指定目录下所有的文件信息
-        /// </summary>
-        /// <param name="path">指定目录路径</param>
-        public static FileInfo[] GetList(string path)
-        {
-            return GetList(path, SearchOption.TopDirectoryOnly);
-        }
-
-        /// <summary>
-        /// 获取指定目录下所有的文件信息
-        /// </summary>
-        /// <param name="path">目录路径</param>
-        /// <param name="option">指示是否搜索所有子目录</param>
-        /// <param name="searchPattern">搜索约束：例如 *.txt</param>
-        /// <returns>文件集合</returns>
-        public static FileInfo[] GetList(string path, SearchOption option, string searchPattern = "*.*")
-        {
-            var dirPath = Path.GetDirectoryName(path);
-            if (Directory.Exists(dirPath))
-            {
-                return new DirectoryInfo(dirPath).GetFiles(searchPattern, option);
-            }
-            return null;
-        }
-
-        /// <summary>
         /// 移动指定文件到新目录，并指定新名称（覆盖旧文件）
         /// </summary>
-        /// <param name="source">源文件路径</param>
-        /// <param name="target">目标文件路径</param>
-        public static void Move(string source, string target)
+        /// <param name="sourcePath">源文件路径</param>
+        /// <param name="targetPath">目标文件路径</param>
+        public static void Move(string sourcePath, string targetPath)
         {
-            Copy(source, target, true);
+            Copy(sourcePath, targetPath, true);
         }
 
         /// <summary>
@@ -161,8 +127,8 @@ namespace OneForAll.File
         /// <summary>
         /// 复制文件到指定目录
         /// </summary>
-        /// <param name="sourceFilePath">源文件路径</param>
-        /// <param name="targetFilePath">目标文件路径</param>
+        /// <param name="source">源文件路径</param>
+        /// <param name="target">目标文件路径</param>
         /// <param name="deleteSource">是否删除源文件</param>
         /// <param name="overWrite">是否覆盖</param>
         public static void Copy(string source, string target, bool deleteSource = false, bool overWrite = true)
@@ -174,10 +140,6 @@ namespace OneForAll.File
                 if (deleteSource) System.IO.File.Delete(source);
             }
         }
-
-        #endregion
-
-        #region 其他
 
         /// <summary>
         /// 确定文件是否可以进行读写
@@ -297,8 +259,5 @@ namespace OneForAll.File
             }
             return pass;
         }
-
-        #endregion
-
     }
 }

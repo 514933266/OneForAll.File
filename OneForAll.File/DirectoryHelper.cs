@@ -21,6 +21,32 @@ namespace OneForAll.File
         }
 
         /// <summary>
+        /// 获取指定目录下所有的文件信息
+        /// </summary>
+        /// <param name="path">指定目录路径</param>
+        public static FileInfo[] GetFiles(string path)
+        {
+            return GetFiles(path, SearchOption.TopDirectoryOnly);
+        }
+
+        /// <summary>
+        /// 获取指定目录下所有的文件信息
+        /// </summary>
+        /// <param name="path">目录路径</param>
+        /// <param name="option">指示是否搜索所有子目录</param>
+        /// <param name="searchPattern">搜索约束：例如 *.txt</param>
+        /// <returns>文件集合</returns>
+        public static FileInfo[] GetFiles(string path, SearchOption option, string searchPattern = "*.*")
+        {
+            var dirPath = Path.GetDirectoryName(path);
+            if (Directory.Exists(dirPath))
+            {
+                return new DirectoryInfo(dirPath).GetFiles(searchPattern, option);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// 删除所有的子目录和文件
         /// </summary>
         /// <param name="path">目录路径</param>
@@ -51,6 +77,7 @@ namespace OneForAll.File
         {
             DeleteFileByCreateTime(path, time, SearchOption.AllDirectories, true);
         }
+
         /// <summary>
         /// 处理指定目录下，超过某个日期的文件
         /// </summary>
@@ -58,7 +85,7 @@ namespace OneForAll.File
         /// <param name="time">时间</param>
         /// <param name="option">检索类型</param>
         /// <param name="deleteDirectory">是否同时删除目录</param>
-        public static void DeleteFileByCreateTime(string path,DateTime time, SearchOption option,bool deleteDirectory)
+        public static void DeleteFileByCreateTime(string path, DateTime time, SearchOption option, bool deleteDirectory)
         {
             if (Directory.Exists(path))
             {
@@ -95,17 +122,6 @@ namespace OneForAll.File
         /// </summary>
         /// <param name="sourceDir">要移动的目录</param>
         /// <param name="targetDir">目标目录</param>
-        [Obsolete("该方法即将废弃，请改用Move方法")]
-        public static void DirectoryMove(string sourceDir, string targetDir)
-        {
-            Move(sourceDir, targetDir);
-        }
-
-        /// <summary>
-        /// 移动目录
-        /// </summary>
-        /// <param name="sourceDir">要移动的目录</param>
-        /// <param name="targetDir">目标目录</param>
         public static void Move(string sourceDir, string targetDir)
         {
             if (Directory.Exists(sourceDir))
@@ -120,35 +136,9 @@ namespace OneForAll.File
         /// <param name="directorySource">源目录</param>
         /// <param name="directoryTarget">要移动到的新目录</param>
         /// <param name="option">指示是否搜索子目录</param>
-        [Obsolete("该方法即将废弃，请改用MoveFiles方法")]
-        public static void MoveDirectoryFiles(string directorySource, string directoryTarget, SearchOption option)
-        {
-            MoveFiles(directorySource, directoryTarget, option);
-        }
-
-        /// <summary>
-        /// 移动指定路径下的所有文件夹和文件(包含父目录)
-        /// </summary>
-        /// <param name="directorySource">源目录</param>
-        /// <param name="directoryTarget">要移动到的新目录</param>
-        /// <param name="option">指示是否搜索子目录</param>
         public static void MoveFiles(string directorySource, string directoryTarget, SearchOption option)
         {
             MoveFiles(directorySource, directoryTarget, option, DatePart.Second, 0);
-        }
-
-        /// <summary>
-        /// 移动指定路径下的所有文件夹和文件(包含父目录) 若指定了特殊的日期时间差，则会移动过期的文件
-        /// </summary>
-        /// <param name="directorySource">源目录</param>
-        /// <param name="directoryTarget">要移动到的新目录</param>
-        /// <param name="option">指示是否递归搜索子目录</param>
-        /// <param name="dateType">日期类型</param>
-        /// <param name="timeSpan">距今日为止的目录建立时间差</param>
-        [Obsolete("该方法即将废弃，请改用MoveFiles方法")]
-        public static void MoveDirectoryFiles(string directorySource, string directoryTarget, SearchOption option,DatePart dateType,int timeSpan)
-        {
-            MoveFiles(directorySource, directoryTarget, option, dateType, timeSpan);
         }
 
         /// <summary>
@@ -185,16 +175,6 @@ namespace OneForAll.File
             {
                 Delete(directorySource);
             }
-        }
-
-        /// <summary>
-        /// 对文件目录集合进行排序
-        /// </summary>
-        /// <param name="dir">目录集合</param>
-        [Obsolete("该方法废弃，请使用SortByCreateTime方法")]
-        public static void SortedDirectoryInfo(DirectoryInfo[] dir)
-        {
-            SortByCreateTime(dir);
         }
 
         /// <summary>

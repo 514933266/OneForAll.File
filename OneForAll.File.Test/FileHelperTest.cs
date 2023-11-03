@@ -14,13 +14,13 @@ namespace OneForAll.File.Test
         [TestMethod]
         public void Write()
         {
-            FileHelper.Create(_sourceFilePath);
+            //FileHelper.Create(_sourceFilePath);
         }
         
         [TestMethod]
         public void WriteStream()
         {
-            var data = FileHelper.ReadStream(_sourceFilePath);
+            var data = FileHelper.Read(_sourceFilePath);
             FileHelper.Write(_targetFilePath, data);
         }
 
@@ -34,7 +34,7 @@ namespace OneForAll.File.Test
         [TestMethod]
         public void ReadStream()
         {
-            var stream = FileHelper.ReadStream(_sourceFilePath);
+            var stream = FileHelper.Read(_sourceFilePath);
         }
 
         [TestMethod]
@@ -47,18 +47,6 @@ namespace OneForAll.File.Test
         public void ReadByte2()
         {
             var bytes = FileHelper.ReadByte(_sourceFilePath, 4);
-        }
-
-        [TestMethod]
-        public void GetList()
-        {
-            var infos = FileHelper.GetList(_sourceFilePath);
-        }
-
-        [TestMethod]
-        public void GetList2()
-        {
-            var infos = FileHelper.GetList(_sourceFilePath, System.IO.SearchOption.TopDirectoryOnly, "*.*");
         }
 
         [TestMethod]
@@ -94,7 +82,7 @@ namespace OneForAll.File.Test
         [TestMethod]
         public void ValidateFileType()
         {
-            var textStream = FileHelper.ReadStream(_sourceFilePath);
+            var textStream = FileHelper.Read(_sourceFilePath);
             var result = FileHelper.ValidateFileType<ZipType>(textStream, 4);
         }
 
