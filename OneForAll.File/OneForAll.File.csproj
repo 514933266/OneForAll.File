@@ -11,7 +11,7 @@
     <PackageLicenseExpression></PackageLicenseExpression>
     <FileVersion>1.2.0.0</FileVersion>
     <AssemblyVersion>1.2.0.0</AssemblyVersion>
-    <Version>2.0.0-net8</Version>
+    <Version>2.0.1</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <RepositoryUrl>https://github.com/514933266/OneForAll.File.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -28,8 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NPOI" Version="2.5.3" />
-    <PackageReference Include="OneForAll.Core" Version="1.0.8.1" />
+    <PackageReference Include="NPOI" Version="2.6.2" />
+    <PackageReference Include="OneForAll.Core" Version="2.0.0-net8" />
   </ItemGroup>
 
 </Project>
