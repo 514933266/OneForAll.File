@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>7.1</LangVersion>
+    <Authors>xhp</Authors>
+    <Company>xhp</Company>
+    <Description>OneForAll文件处理类库：目录操作，文件读、写、移动、复制，文件类型校验，Word、Excel处理等</Description>
+    <PackageProjectUrl>https://github.com/514933266/OneForAll.File.git</PackageProjectUrl>
+    <Copyright>xhp</Copyright>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <FileVersion>1.0.99</FileVersion>
+    <AssemblyVersion>1.0.99</AssemblyVersion>
+    <Version>1.0.99</Version>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/514933266/OneForAll.File.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DocumentationFile></DocumentationFile>
+    <WarningLevel>2</WarningLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\xhp\.nuget\packages\dotnetcore.npoi\1.2.3\contentFiles\any\netstandard2.0\NOTICE.TXT" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NPOI" Version="2.7.5" />
+    <PackageReference Include="OneForAll.Core" Version="1.0.99" />
+  </ItemGroup>
+
+</Project>
