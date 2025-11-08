@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <LangVersion>7.1</LangVersion>
     <Authors>xhp</Authors>
     <Company>xhp</Company>
@@ -9,9 +9,9 @@
     <PackageProjectUrl>https://github.com/514933266/OneForAll.File.git</PackageProjectUrl>
     <Copyright>xhp</Copyright>
     <PackageLicenseExpression></PackageLicenseExpression>
-    <FileVersion>1.0.99</FileVersion>
-    <AssemblyVersion>1.0.99</AssemblyVersion>
-    <Version>1.0.99</Version>
+    <FileVersion>2.0.2</FileVersion>
+    <AssemblyVersion>2.0.2</AssemblyVersion>
+    <Version>2.0.2</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <RepositoryUrl>https://github.com/514933266/OneForAll.File.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -29,7 +29,7 @@
 
   <ItemGroup>
     <PackageReference Include="NPOI" Version="2.7.5" />
-    <PackageReference Include="OneForAll.Core" Version="1.0.99" />
+    <PackageReference Include="OneForAll.Core" Version="2.0.2" />
   </ItemGroup>
 
 </Project>

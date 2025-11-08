@@ -6,7 +6,6 @@
 *.user
 *.userosscache
 *.sln.docstates
-nuget.exe
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -22,9 +21,7 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
-[Uu]pload/
 [Tt]estResults/
-[Pp]ackages/
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -44,4 +41,3 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 
-/OneForAll.File.Test/NPOIExcelHelperTest.cs
