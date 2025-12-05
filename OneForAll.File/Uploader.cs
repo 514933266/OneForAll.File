@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using OneForAll.Core.Extension;
-using OneForAll.Core.Upload;
+using OneForAll.Core.UploadFile;
 
 namespace OneForAll.File
 {
